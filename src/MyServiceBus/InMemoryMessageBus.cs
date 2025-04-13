@@ -1,7 +1,5 @@
-using System;
+using MyServiceBus;
 using MyServiceBus.Transport;
-
-namespace MyServiceBus;
 
 public class InMemoryMessageBus : IMessageBus
 {
@@ -12,13 +10,14 @@ public class InMemoryMessageBus : IMessageBus
     {
         var queueName = MessageTopology.For<T>().EntityName;
 
+        var correlationId = SendTopology.Send<T>().GetCorrelationId(message);
+        Console.WriteLine($"[Send] {typeof(T).Name} with CorrelationId = {correlationId}");
+
         if (_handlers.TryGetValue(queueName, out var handlerList))
         {
-            foreach (var handler in handlerList)
-                handler(message);
+            var tasks = handlerList.Select(h => h(message));
+            return Task.WhenAll(tasks);
         }
-
-        Console.WriteLine($"[InMemoryBus] Sent {typeof(T).Name} to {queueName}");
 
         return Task.CompletedTask;
     }
@@ -28,11 +27,12 @@ public class InMemoryMessageBus : IMessageBus
         var topology = PublishTopology.GetMessageTopology<T>();
         if (topology.Exclude)
         {
-            Console.WriteLine($"[InMemoryBus] Skipped publish of {typeof(T).Name} (excluded)");
+            Console.WriteLine($"[Publish] Skipped {typeof(T).Name}");
             return Task.CompletedTask;
         }
 
         var entityName = MessageTopology.For<T>().EntityName;
+        Console.WriteLine($"[Publish] Publishing {typeof(T).Name} to Exchange: '{entityName}' (fanout)");
 
         if (_handlers.TryGetValue(entityName, out var handlerList))
         {
@@ -40,15 +40,15 @@ public class InMemoryMessageBus : IMessageBus
                 handler(message);
         }
 
-        Console.WriteLine($"[InMemoryBus] Published {typeof(T).Name} to {entityName}");
-
-        // Simulate interface bindings
+        // Simulera routed till bound types (t.ex. interfaces)
         foreach (var iface in typeof(T).GetInterfaces())
         {
             var ifaceTopo = PublishTopology.GetMessageTopology(iface);
             foreach (var boundType in ifaceTopo.BoundTypes)
             {
                 var boundExchange = MessageTopology.For(boundType).EntityName;
+                Console.WriteLine($"Also routed to bound type exchange: {boundType.Name}");
+
                 if (_handlers.TryGetValue(boundExchange, out var boundList))
                 {
                     foreach (var handler in boundList)

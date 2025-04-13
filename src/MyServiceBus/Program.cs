@@ -291,6 +291,7 @@ public interface IPublishTopology<TMessage> : IPublishTopology
 
 public interface ISendTopology<T>
 {
+    string GetCorrelationId(T message);
     void UseCorrelationId(Func<T, string> selector);
 }
 

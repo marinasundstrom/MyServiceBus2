@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
+
 using MyServiceBus;
 using MyServiceBus.RabbitMq;
+using MyServiceBus.Topology;
 
 //var bus = new RabbitMqMessageBus();
 var bus = new MessageBus(new RabbitMqTransport());
@@ -19,6 +21,7 @@ await bus.ReceiveEndpoint<UserCreatedEvent>("user-event-queue", async context =>
     var message = context.Message;
 
     Console.WriteLine($"[Consumer] Got event: {message.UserId}");
+
     await Task.CompletedTask;
 });
 
@@ -31,7 +34,8 @@ await bus.ReceiveEndpoint<MyCommand>("MyCommand", pipeline.Build(async context =
     var message = context.Message;
 
     Console.WriteLine($"[Consumer] Received command: {message.CorrelationId}");
-    await Task.CompletedTask;
+
+    await Task.Delay(1200);
 }));
 
 await bus.Send(new MyCommand { CorrelationId = "abc123" });

@@ -1,4 +1,5 @@
 using MyServiceBus;
+using MyServiceBus.Topology;
 using MyServiceBus.Transport;
 
 public class InMemoryMessageBus : IMessageBus

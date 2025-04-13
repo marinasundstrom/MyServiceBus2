@@ -1,4 +1,5 @@
 ﻿using MyServiceBus;
+using MyServiceBus.Topology;
 
 var bus = new InMemoryMessageBus();
 

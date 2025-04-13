@@ -4,6 +4,7 @@ using Xunit;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using MyServiceBus.Topology;
 
 public class InMemoryMessageBusTest
 {

@@ -1,6 +1,9 @@
+using MyServiceBus.Topology;
 using MyServiceBus.Transport;
+
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+
 using System.Text.Json;
 
 namespace MyServiceBus.RabbitMq;

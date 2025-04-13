@@ -1,5 +1,8 @@
 using System.Text.Json;
+
+using MyServiceBus.Topology;
 using MyServiceBus.Transport;
+
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 

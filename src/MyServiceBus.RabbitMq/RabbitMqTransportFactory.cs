@@ -20,20 +20,20 @@ public class RabbitMqTransportFactory : ITransportFactory
     {
         connection ??= await _factory.CreateConnectionAsync(cancellationToken);
         var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
-        return new RabbitMqTransport(channel, _topology);
+        return new RabbitMqPublishTransport(channel, _topology);
     }
 
     public async Task<IReceiveTransport> CreateReceiveTransport(CancellationToken cancellationToken = default)
     {
         connection ??= await _factory.CreateConnectionAsync(cancellationToken);
         var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
-        return new RabbitMqTransport(channel, _topology);
+        return new RabbitMqReceiveTransport(channel, _topology);
     }
 
     public async Task<ISendTransport> CreateSendTransport(CancellationToken cancellationToken = default)
     {
         connection ??= await _factory.CreateConnectionAsync(cancellationToken);
         var channel = await connection.CreateChannelAsync(cancellationToken: cancellationToken);
-        return new RabbitMqTransport(channel, _topology);
+        return new RabbitMqSendTransport(channel, _topology);
     }
 }

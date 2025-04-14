@@ -1,3 +1,4 @@
+
 using MyServiceBus;
 using MyServiceBus.Topology;
 
@@ -82,6 +83,16 @@ public class InMemoryMessageBus : IMessageBus
 
         Console.WriteLine($"[InMemoryBus] Subscribed to {typeof(T).Name} on queue '{queueName}'");
 
+        return Task.CompletedTask;
+    }
+
+    Task IMessageBus.StartAsync(CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+
+    Task IMessageBus.StopAsync(CancellationToken cancellationToken)
+    {
         return Task.CompletedTask;
     }
 }

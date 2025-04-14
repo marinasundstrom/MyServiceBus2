@@ -1,3 +1,4 @@
+
 using MyServiceBus.Topology;
 using MyServiceBus.Transport;
 
@@ -5,31 +6,33 @@ namespace MyServiceBus;
 
 public class MessageBus : IMessageBus
 {
-    private readonly ITransport _transport;
+    private readonly ITransportFactory _transportFactory;
 
     public IBusTopology Topology { get; }
 
-    public MessageBus(IBusTopology topology, ITransport transport)
+    public MessageBus(IBusTopology topology, ITransportFactory transportFactory)
     {
         Topology = topology;
-        _transport = transport;
+        _transportFactory = transportFactory;
     }
 
-    public Task Send<T>(T message)
+    public async Task Send<T>(T message)
     {
         var context = new SendContext
         {
             CorrelationId = ((SendTopologyImpl<T>)Topology.Send<T>()).GetCorrelationId(message)
         };
 
-        return _transport.Send(message, context);
+        var transport = await _transportFactory.CreateSendTransport();
+
+        await transport.Send(message, context);
     }
 
-    public Task Publish<T>(T message)
+    public async Task Publish<T>(T message)
     {
         var pubTopology = Topology.Publish<T>();
         if (pubTopology.Exclude)
-            return Task.CompletedTask;
+            return;
 
         var context = new PublishContext
         {
@@ -37,11 +40,25 @@ public class MessageBus : IMessageBus
             ExchangeType = pubTopology.ExchangeType
         };
 
-        return _transport.Publish(message, context);
+        var transport = await _transportFactory.CreatePublishTransport();
+
+        await transport.Publish(message, context);
     }
 
-    public Task ReceiveEndpoint<T>(string queue, ReceiveEndpointHandler<T> handler)
+    public async Task ReceiveEndpoint<T>(string queue, ReceiveEndpointHandler<T> handler)
     {
-        return _transport.Subscribe<T>(queue, (receiveContext) => handler(new ConsumeContextImpl<T>(receiveContext)));
+        var transport = await _transportFactory.CreateReceiveTransport();
+
+        await transport.Subscribe<T>(queue, (receiveContext) => handler(new ConsumeContextImpl<T>(receiveContext)));
+    }
+
+    public Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
     }
 }

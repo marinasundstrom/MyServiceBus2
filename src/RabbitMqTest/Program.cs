@@ -11,7 +11,11 @@ topology.Publish<IEvent>().AddMessagePublishTopology<UserCreatedEvent>();
 
 //var bus = new RabbitMqMessageBus(topology, host: "localhost");
 
-var bus = new MessageBus(topology, new RabbitMqTransport(topology));
+var bus = new MessageBus(topology, new RabbitMqTransportFactory(topology));
+
+await bus.StartAsync();
+
+//var bus = new MessageBus(topology, new RabbitMqTransport(topology));
 
 // Configure topology
 

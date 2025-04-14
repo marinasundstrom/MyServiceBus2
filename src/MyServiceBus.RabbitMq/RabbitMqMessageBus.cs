@@ -108,4 +108,14 @@ public class RabbitMqMessageBus : IMessageBus
 
         Console.WriteLine($"[RabbitMQ] Listening to queue: {queueName} for {typeof(T).Name}");
     }
+
+    public Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
 }

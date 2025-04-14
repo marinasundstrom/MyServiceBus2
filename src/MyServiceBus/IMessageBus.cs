@@ -9,4 +9,7 @@ public interface IMessageBus
     Task Publish<T>(T message);
     Task ReceiveEndpoint<T>(string queue, ReceiveEndpointHandler<T> handler);
     Task Send<T>(T message);
+
+    Task StartAsync(CancellationToken cancellationToken = default);
+    Task StopAsync(CancellationToken cancellationToken = default);
 }

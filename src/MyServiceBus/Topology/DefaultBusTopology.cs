@@ -62,4 +62,9 @@ public class DefaultBusTopology : IBusTopology
 
         return (IPublishTopology)topology;
     }
+
+    public IConsumeTopology Consumer(bool configure = true)
+    {
+        return new ConsumeTopologyImpl(this, configure);
+    }
 }

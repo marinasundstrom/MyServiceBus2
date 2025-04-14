@@ -1,6 +1,6 @@
 namespace MyServiceBus.Topology;
 
-public interface IConsumerTopology
+public interface IConsumeTopology
 {
     bool ConfigureConsumeTopology { get; }
 

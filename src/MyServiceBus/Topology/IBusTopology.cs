@@ -9,4 +9,5 @@ public interface IBusTopology
     IPublishTopology<TMessage> Publish<TMessage>();
     IPublishTopology Publish(Type messageType);
     ISendTopology<T> Send<T>();
+    IConsumeTopology Consumer(bool configure = true);
 }

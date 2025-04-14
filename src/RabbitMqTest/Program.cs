@@ -1,8 +1,15 @@
 ﻿using System.Diagnostics;
 
+using Microsoft.Extensions.DependencyInjection;
+
 using MyServiceBus;
 using MyServiceBus.RabbitMq;
 using MyServiceBus.Topology;
+
+ServiceCollection services = new ServiceCollection();
+services.AddScoped<OrderSubmittedConsumer>();
+
+var sp = services.BuildServiceProvider();
 
 var topology = new DefaultBusTopology();
 //topology.For<MyCommand>().SetEntityName("my-queue");
@@ -11,11 +18,25 @@ topology.Publish<IEvent>().AddMessagePublishTopology<UserCreatedEvent>();
 
 //var bus = new RabbitMqMessageBus(topology, host: "localhost");
 
-var bus = new MessageBus(topology, new RabbitMqTransportFactory(topology));
+var transportFactory = new RabbitMqTransportFactory(topology);
+
+var rec = new ReceiveEndpointConfigurator(
+    await transportFactory.CreateReceiveTransport(),
+    topology.Consumer(),
+    sp);
+
+rec.Consumer<OrderSubmittedConsumer>();
+
+var bus = new MessageBus(topology, transportFactory);
 
 await bus.StartAsync();
 
-//var bus = new MessageBus(topology, new RabbitMqTransport(topology));
+await bus.Publish(new OrderSubmitted { OrderId = Guid.NewGuid() });
+
+Console.WriteLine("Waiting for messages. Press Enter to exit.");
+Console.ReadLine();
+
+return;
 
 // Configure topology
 

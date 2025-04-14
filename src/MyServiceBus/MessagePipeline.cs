@@ -2,16 +2,16 @@ namespace MyServiceBus;
 
 public class MessagePipeline<T>
 {
-    private readonly List<IMessageFilter<T>> _filters = new();
+    private readonly List<IConsumeFilter<T>> _filters = new();
 
-    public void Use(IMessageFilter<T> filter)
+    public void Use(IConsumeFilter<T> filter)
     {
         _filters.Add(filter);
     }
 
-    public MessageHandlerDelegate<T> Build(MessageHandlerDelegate<T> terminal)
+    public ReceiveEndpointHandler<T> Build(ReceiveEndpointHandler<T> terminal)
     {
-        MessageHandlerDelegate<T> current = terminal;
+        ReceiveEndpointHandler<T> current = terminal;
 
         foreach (var filter in _filters.AsEnumerable().Reverse())
         {

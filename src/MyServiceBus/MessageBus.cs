@@ -7,8 +7,11 @@ public class MessageBus : IMessageBus
 {
     private readonly ITransport _transport;
 
-    public MessageBus(ITransport transport)
+    public IBusTopology Topology { get; }
+
+    public MessageBus(IBusTopology topology, ITransport transport)
     {
+        Topology = topology;
         _transport = transport;
     }
 
@@ -16,7 +19,7 @@ public class MessageBus : IMessageBus
     {
         var context = new SendContext
         {
-            CorrelationId = ((SendTopologyImpl<T>)SendTopology.Send<T>()).GetCorrelationId(message)
+            CorrelationId = ((SendTopologyImpl<T>)Topology.Send<T>()).GetCorrelationId(message)
         };
 
         return _transport.Send(message, context);
@@ -24,21 +27,21 @@ public class MessageBus : IMessageBus
 
     public Task Publish<T>(T message)
     {
-        var pubTopology = PublishTopology.GetMessageTopology<T>();
+        var pubTopology = Topology.Publish<T>();
         if (pubTopology.Exclude)
             return Task.CompletedTask;
 
         var context = new PublishContext
         {
-            ExchangeName = MessageTopology.For<T>().EntityName,
+            ExchangeName = Topology.For<T>().EntityName,
             ExchangeType = pubTopology.ExchangeType
         };
 
         return _transport.Publish(message, context);
     }
 
-    public Task ReceiveEndpoint<T>(string queue, MessageHandlerDelegate<T> handler)
+    public Task ReceiveEndpoint<T>(string queue, ReceiveEndpointHandler<T> handler)
     {
-        return _transport.Subscribe(queue, handler);
+        return _transport.Subscribe<T>(queue, (receiveContext) => handler(new ConsumeContextImpl<T>(receiveContext)));
     }
 }

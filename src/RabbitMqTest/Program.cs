@@ -4,13 +4,16 @@ using MyServiceBus;
 using MyServiceBus.RabbitMq;
 using MyServiceBus.Topology;
 
-//var bus = new RabbitMqMessageBus();
-var bus = new MessageBus(new RabbitMqTransport());
+var topology = new DefaultBusTopology();
+//topology.For<MyCommand>().SetEntityName("my-queue");
+topology.For<UserCreatedEvent>().SetEntityName("user-created");
+topology.Publish<IEvent>().AddMessagePublishTopology<UserCreatedEvent>();
+
+//var bus = new RabbitMqMessageBus(topology, host: "localhost");
+
+var bus = new MessageBus(topology, new RabbitMqTransport(topology));
 
 // Configure topology
-//MessageTopology.For<MyCommand>().SetEntityName("my-queue");
-MessageTopology.For<UserCreatedEvent>().SetEntityName("user-created");
-PublishTopology.GetMessageTopology<IEvent>().AddMessagePublishTopology<UserCreatedEvent>();
 
 // Publish
 await bus.Publish(new UserCreatedEvent("123"));

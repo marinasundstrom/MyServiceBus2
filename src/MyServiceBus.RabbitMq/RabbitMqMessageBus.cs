@@ -12,8 +12,11 @@ public class RabbitMqMessageBus : IMessageBus
 {
     private readonly ConnectionFactory _factory;
 
-    public RabbitMqMessageBus(string host = "localhost")
+    public IBusTopology Topology { get; }
+
+    public RabbitMqMessageBus(IBusTopology topology, string host = "localhost")
     {
+        Topology = topology;
         _factory = new ConnectionFactory
         {
             HostName = host,
@@ -23,13 +26,13 @@ public class RabbitMqMessageBus : IMessageBus
 
     public async Task Send<T>(T message)
     {
-        var topology = (SendTopologyImpl<T>)SendTopology.Send<T>();
+        var topology = (SendTopologyImpl<T>)Topology.Send<T>();
         var correlationId = topology.GetCorrelationId(message);
 
         using var conn = await _factory.CreateConnectionAsync();
         using var channel = await conn.CreateChannelAsync();
 
-        var queueName = MessageTopology.For<T>().EntityName;
+        var queueName = Topology.For<T>().EntityName;
 
         await channel.QueueDeclareAsync(queueName, durable: true, exclusive: false, autoDelete: false);
 
@@ -44,14 +47,14 @@ public class RabbitMqMessageBus : IMessageBus
 
     public async Task Publish<T>(T message)
     {
-        var publishTopo = (PublishTopologyImpl<T>)PublishTopology.GetMessageTopology<T>();
+        var publishTopo = (PublishTopologyImpl<T>)Topology.Publish<T>();
         if (publishTopo.Exclude)
         {
             Console.WriteLine($"[RabbitMQ] Skipped publish of {typeof(T).Name} (excluded)");
             return;
         }
 
-        var entityName = MessageTopology.For<T>().EntityName;
+        var entityName = Topology.For<T>().EntityName;
         var exchangeType = publishTopo.ExchangeType;
 
         using var conn = await _factory.CreateConnectionAsync();
@@ -70,19 +73,19 @@ public class RabbitMqMessageBus : IMessageBus
 
         foreach (var iface in typeof(T).GetInterfaces())
         {
-            var ifaceTopo = PublishTopology.GetMessageTopology(iface);
+            var ifaceTopo = Topology.Publish(iface);
             foreach (var boundType in ifaceTopo.BoundTypes)
             {
-                var boundExchange = MessageTopology.For(boundType).EntityName;
+                var boundExchange = Topology.For(boundType).EntityName;
                 await channel.ExchangeDeclareAsync(boundExchange, exchangeType, durable: true);
                 await channel.ExchangeBindAsync(boundExchange, entityName, "");
             }
         }
     }
 
-    public async Task ReceiveEndpoint<T>(string queueName, MessageHandlerDelegate<T> onMessage)
+    public async Task ReceiveEndpoint<T>(string queueName, ReceiveEndpointHandler<T> onMessage)
     {
-        var entityName = MessageTopology.For<T>().EntityName;
+        var entityName = Topology.For<T>().EntityName;
 
         var conn = await _factory.CreateConnectionAsync();
         var channel = await conn.CreateChannelAsync();
@@ -95,8 +98,8 @@ public class RabbitMqMessageBus : IMessageBus
         consumer.ReceivedAsync += async (model, ea) =>
         {
             var body = ea.Body.ToArray();
-            var msg = JsonSerializer.Deserialize<T>(body);
-            await onMessage(new ReceiveContext<T>(msg, ea.BasicProperties.Headers!, ea.CancellationToken));
+            var receiveContext = new ReceiveContext<T>(body, ea.BasicProperties.Headers!, ea.CancellationToken);
+            await onMessage(new ConsumeContextImpl<T>(receiveContext));
 
             await channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
         };

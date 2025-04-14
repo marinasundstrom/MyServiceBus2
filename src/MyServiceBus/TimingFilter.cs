@@ -1,11 +1,12 @@
 using System.Diagnostics;
+
 using MyServiceBus.Transport;
 
 namespace MyServiceBus;
 
-public class TimingFilter<T> : IMessageFilter<T>
+public class TimingFilter<T> : IConsumeFilter<T>
 {
-    public async Task Send(ReceiveContext<T> context, MessageHandlerDelegate<T> next)
+    public async Task Send(ConsumeContext<T> context, ReceiveEndpointHandler<T> next)
     {
         var stopwatch = Stopwatch.StartNew();
 

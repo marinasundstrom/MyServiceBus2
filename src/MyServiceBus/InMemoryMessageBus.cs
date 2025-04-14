@@ -1,17 +1,18 @@
 using MyServiceBus;
 using MyServiceBus.Topology;
-using MyServiceBus.Transport;
 
 public class InMemoryMessageBus : IMessageBus
 {
     private readonly Dictionary<string, List<Func<object, Task>>> _handlers = new();
     private readonly object _lock = new();
 
+    public IBusTopology Topology { get; } = new DefaultBusTopology();
+
     public Task Send<T>(T message)
     {
-        var queueName = MessageTopology.For<T>().EntityName;
+        var queueName = Topology.For<T>().EntityName;
 
-        var correlationId = SendTopology.Send<T>().GetCorrelationId(message);
+        var correlationId = Topology.Send<T>().GetCorrelationId(message);
         Console.WriteLine($"[Send] {typeof(T).Name} with CorrelationId = {correlationId}");
 
         if (_handlers.TryGetValue(queueName, out var handlerList))
@@ -25,14 +26,14 @@ public class InMemoryMessageBus : IMessageBus
 
     public Task Publish<T>(T message)
     {
-        var topology = PublishTopology.GetMessageTopology<T>();
+        var topology = Topology.Publish<T>();
         if (topology.Exclude)
         {
             Console.WriteLine($"[Publish] Skipped {typeof(T).Name}");
             return Task.CompletedTask;
         }
 
-        var entityName = MessageTopology.For<T>().EntityName;
+        var entityName = Topology.For<T>().EntityName;
         Console.WriteLine($"[Publish] Publishing {typeof(T).Name} to Exchange: '{entityName}' (fanout)");
 
         if (_handlers.TryGetValue(entityName, out var handlerList))
@@ -44,10 +45,10 @@ public class InMemoryMessageBus : IMessageBus
         // Simulera routed till bound types (t.ex. interfaces)
         foreach (var iface in typeof(T).GetInterfaces())
         {
-            var ifaceTopo = PublishTopology.GetMessageTopology(iface);
+            var ifaceTopo = Topology.Publish(iface);
             foreach (var boundType in ifaceTopo.BoundTypes)
             {
-                var boundExchange = MessageTopology.For(boundType).EntityName;
+                var boundExchange = Topology.For(boundType).EntityName;
                 Console.WriteLine($"Also routed to bound type exchange: {boundType.Name}");
 
                 if (_handlers.TryGetValue(boundExchange, out var boundList))
@@ -61,7 +62,7 @@ public class InMemoryMessageBus : IMessageBus
         return Task.CompletedTask;
     }
 
-    public Task ReceiveEndpoint<T>(string queueName, MessageHandlerDelegate<T> onMessage)
+    public Task ReceiveEndpoint<T>(string queueName, ReceiveEndpointHandler<T> onMessage)
     {
         lock (_lock)
         {
@@ -71,7 +72,9 @@ public class InMemoryMessageBus : IMessageBus
             list.Add(msg =>
             {
                 if (msg is T typed)
-                    return onMessage(new ReceiveContext<T>(typed, new Dictionary<string, object?>(), CancellationToken.None));
+                {
+                    return onMessage(new InMemoryConsumeContextImpl<T>(typed));
+                }
 
                 return Task.CompletedTask;
             });

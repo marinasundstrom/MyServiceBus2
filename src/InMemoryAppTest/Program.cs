@@ -4,8 +4,8 @@ using MyServiceBus.Topology;
 var bus = new InMemoryMessageBus();
 
 // Configure
-MessageTopology.For<MyCommand>().SetEntityName("my-queue");
-MessageTopology.For<MyEvent>().SetEntityName("my-event");
+bus.Topology.For<MyCommand>().SetEntityName("my-queue");
+bus.Topology.For<MyEvent>().SetEntityName("my-event");
 
 await bus.ReceiveEndpoint<MyCommand>("my-queue", context =>
 {

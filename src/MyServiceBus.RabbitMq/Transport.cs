@@ -12,13 +12,19 @@ public class RabbitMqTransport : ITransport
 {
     private readonly List<(IConnection conn, IChannel ch)> _activeConsumers = new();
     private readonly ConnectionFactory _factory = new ConnectionFactory { HostName = "localhost" };
+    private IBusTopology _topology;
+
+    public RabbitMqTransport(IBusTopology topology)
+    {
+        _topology = topology;
+    }
 
     public async Task Send<T>(T message, SendContext context)
     {
         using var conn = await _factory.CreateConnectionAsync();
         using var ch = await conn.CreateChannelAsync();
 
-        var queue = MessageTopology.For<T>().EntityName;
+        var queue = _topology.For<T>().EntityName;
         await ch.QueueDeclareAsync(queue, true, false, false);
 
         var body = JsonSerializer.SerializeToUtf8Bytes(message);
@@ -42,14 +48,14 @@ public class RabbitMqTransport : ITransport
         await ch.BasicPublishAsync(context.ExchangeName, "", false, props, body);
     }
 
-    public async Task Subscribe<T>(string queue, MessageHandlerDelegate<T> handler)
+    public async Task Subscribe<T>(string queue, Transport.MessageHandlerDelegate<T> handler)
     {
         var conn = await _factory.CreateConnectionAsync();
         var ch = await conn.CreateChannelAsync();
 
         _activeConsumers.Add((conn, ch));
 
-        var exchange = MessageTopology.For<T>().EntityName;
+        var exchange = _topology.For<T>().EntityName;
         await ch.ExchangeDeclareAsync(exchange, "fanout", durable: true);
         await ch.QueueDeclareAsync(queue, true, false, false);
         await ch.QueueBindAsync(queue, exchange, "");
@@ -57,8 +63,7 @@ public class RabbitMqTransport : ITransport
         var consumer = new AsyncEventingBasicConsumer(ch);
         consumer.ReceivedAsync += async (s, ea) =>
         {
-            var message = JsonSerializer.Deserialize<T>(ea.Body.ToArray());
-            await handler(new ReceiveContext<T>(message, ea.BasicProperties.Headers!, ea.CancellationToken));
+            await handler(new ReceiveContext<T>(ea.Body, ea.BasicProperties.Headers!, ea.CancellationToken));
             await ch.BasicAckAsync(ea.DeliveryTag, false);
         };
 

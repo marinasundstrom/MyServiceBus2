@@ -1,6 +1,5 @@
 using System;
-using MyServiceBus.Transport;
 
-namespace MyServiceBus;
+namespace MyServiceBus.Transport;
 
 public delegate Task MessageHandlerDelegate<T>(ReceiveContext<T> context);

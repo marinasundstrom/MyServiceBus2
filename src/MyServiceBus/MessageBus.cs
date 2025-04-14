@@ -18,14 +18,15 @@ public class MessageBus : IMessageBus
 
     public async Task Send<T>(T message)
     {
-        var context = new SendContext
+        var context = new SendContext<T>
         {
+            Message = message,
             CorrelationId = ((SendTopologyImpl<T>)Topology.Send<T>()).GetCorrelationId(message)
         };
 
         var transport = await _transportFactory.CreateSendTransport();
 
-        await transport.Send(message, context);
+        await transport.Send(context);
     }
 
     public async Task Publish<T>(T message)

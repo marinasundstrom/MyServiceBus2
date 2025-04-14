@@ -18,12 +18,12 @@ public class RabbitMqSendTransport : ISendTransport
         _topology = topology;
     }
 
-    public async Task Send<T>(T message, SendContext context)
+    public async Task Send<T>(SendContext<T> context)
     {
         var queue = _topology.For<T>().EntityName;
         await _channel.QueueDeclareAsync(queue, true, false, false);
 
-        var body = JsonSerializer.SerializeToUtf8Bytes(message);
+        var body = context.Serialize();
 
         var props = new BasicProperties();
         props.CorrelationId = context.CorrelationId;

@@ -76,7 +76,7 @@ public class RabbitMqTransport : ISendTransport, IPublishTransport, IReceiveTran
         await ch.BasicPublishAsync(context.ExchangeName, "", false, props, body);
     }
 
-    public async Task Subscribe<T>(string queue, Transport.MessageHandlerDelegate<T> handler)
+    public async Task Subscribe<T>(string queue, Transport.ReceiveHandler<T> handler)
     {
         var ch = await _connection.CreateChannelAsync();
 

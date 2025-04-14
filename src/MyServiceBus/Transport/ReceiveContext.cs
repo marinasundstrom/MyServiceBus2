@@ -3,6 +3,7 @@ using System.Text.Json;
 namespace MyServiceBus.Transport;
 
 public class ReceiveContext<T>
+    where T : class
 {
     private T? _message;
     private readonly ReadOnlyMemory<byte> _data;
@@ -29,7 +30,7 @@ public class ReceiveContext<T>
             return true;
         }
 
-        message = default!;
+        message = default(T)!;
         return false;
     }
     public IDictionary<string, object?> TransportHeaders { get; }

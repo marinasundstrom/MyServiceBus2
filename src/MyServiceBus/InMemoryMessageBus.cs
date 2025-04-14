@@ -10,6 +10,7 @@ public class InMemoryMessageBus : IMessageBus
     public IBusTopology Topology { get; } = new DefaultBusTopology();
 
     public Task Send<T>(T message)
+        where T : class
     {
         var queueName = Topology.For<T>().EntityName;
 
@@ -26,6 +27,7 @@ public class InMemoryMessageBus : IMessageBus
     }
 
     public Task Publish<T>(T message)
+        where T : class
     {
         var topology = Topology.Publish<T>();
         if (topology.Exclude)
@@ -64,6 +66,7 @@ public class InMemoryMessageBus : IMessageBus
     }
 
     public Task ReceiveEndpoint<T>(string queueName, ReceiveEndpointHandler<T> onMessage)
+        where T : class
     {
         lock (_lock)
         {

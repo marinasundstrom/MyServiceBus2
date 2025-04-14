@@ -18,6 +18,7 @@ public class RabbitMqReceiveTransport : IReceiveTransport
     }
 
     public async Task Subscribe<T>(string queue, ReceiveHandler<T> handler)
+        where T : class
     {
         var exchange = _topology.For<T>().EntityName;
         await _channel.ExchangeDeclareAsync(exchange, "fanout", durable: true);

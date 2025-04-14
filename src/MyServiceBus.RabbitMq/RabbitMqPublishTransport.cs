@@ -18,11 +18,11 @@ public class RabbitMqPublishTransport : IPublishTransport
         _topology = topology;
     }
 
-    public async Task Publish<T>(T message, PublishContext context)
+    public async Task Publish<T>(PublishContext<T> context)
     {
         await _channel.ExchangeDeclareAsync(context.ExchangeName, context.ExchangeType, durable: true);
 
-        var body = JsonSerializer.SerializeToUtf8Bytes(message);
+        var body = JsonSerializer.SerializeToUtf8Bytes(context.Message);
         var props = new BasicProperties();
 
         await _channel.BasicPublishAsync(context.ExchangeName, "", false, props, body);

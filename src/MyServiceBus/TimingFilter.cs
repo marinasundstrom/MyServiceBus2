@@ -5,6 +5,7 @@ using MyServiceBus.Transport;
 namespace MyServiceBus;
 
 public class TimingFilter<T> : IConsumeFilter<T>
+    where T : class
 {
     public async Task Send(ConsumeContext<T> context, ReceiveEndpointHandler<T> next)
     {

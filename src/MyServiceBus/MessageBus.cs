@@ -17,6 +17,7 @@ public class MessageBus : IMessageBus
     }
 
     public async Task Send<T>(T message)
+        where T : class
     {
         var context = new SendContext<T>
         {
@@ -30,23 +31,26 @@ public class MessageBus : IMessageBus
     }
 
     public async Task Publish<T>(T message)
+        where T : class
     {
         var pubTopology = Topology.Publish<T>();
         if (pubTopology.Exclude)
             return;
 
-        var context = new PublishContext
+        var context = new PublishContext<T>
         {
+            Message = message,
             ExchangeName = Topology.For<T>().EntityName,
             ExchangeType = pubTopology.ExchangeType
         };
 
         var transport = await _transportFactory.CreatePublishTransport();
 
-        await transport.Publish(message, context);
+        await transport.Publish(context);
     }
 
     public async Task ReceiveEndpoint<T>(string queue, ReceiveEndpointHandler<T> handler)
+        where T : class
     {
         var transport = await _transportFactory.CreateReceiveTransport();
 

@@ -25,6 +25,7 @@ public class RabbitMqMessageBus : IMessageBus
     }
 
     public async Task Send<T>(T message)
+        where T : class
     {
         var topology = (SendTopologyImpl<T>)Topology.Send<T>();
         var correlationId = topology.GetCorrelationId(message);
@@ -46,6 +47,7 @@ public class RabbitMqMessageBus : IMessageBus
     }
 
     public async Task Publish<T>(T message)
+        where T : class
     {
         var publishTopo = (PublishTopologyImpl<T>)Topology.Publish<T>();
         if (publishTopo.Exclude)
@@ -84,6 +86,7 @@ public class RabbitMqMessageBus : IMessageBus
     }
 
     public async Task ReceiveEndpoint<T>(string queueName, ReceiveEndpointHandler<T> onMessage)
+        where T : class
     {
         var entityName = Topology.For<T>().EntityName;
 

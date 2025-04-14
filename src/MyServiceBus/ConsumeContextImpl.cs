@@ -3,6 +3,7 @@ using MyServiceBus.Transport;
 namespace MyServiceBus;
 
 public class ConsumeContextImpl<T> : ConsumeContext<T>
+    where T : class
 {
     private readonly ReceiveContext<T> _receiveContext;
 

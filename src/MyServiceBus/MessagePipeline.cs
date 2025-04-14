@@ -1,6 +1,7 @@
 namespace MyServiceBus;
 
 public class MessagePipeline<T>
+    where T : class
 {
     private readonly List<IConsumeFilter<T>> _filters = new();
 

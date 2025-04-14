@@ -33,10 +33,12 @@ await bus.StartAsync();
 
 await bus.Publish(new OrderSubmitted { OrderId = Guid.NewGuid() });
 
+/*
 Console.WriteLine("Waiting for messages. Press Enter to exit.");
 Console.ReadLine();
 
 return;
+*/
 
 // Configure topology
 
@@ -74,3 +76,27 @@ Console.ReadLine();
 public interface IEvent { }
 
 public record UserCreatedEvent(string UserId) : IEvent;
+
+public class OrderSubmittedConsumer : IConsumer<OrderSubmitted>
+{
+    public Task Consume(ConsumeContext<OrderSubmitted> context)
+    {
+        Console.WriteLine($"Handled OrderSubmitted: {context.Message.OrderId}");
+        return Task.CompletedTask;
+    }
+}
+
+public record OrderSubmitted
+{
+    public Guid OrderId { get; init; }
+}
+
+public record MyMessage
+{
+
+}
+
+public record MyCommand
+{
+    public string CorrelationId { get; set; } = Guid.NewGuid().ToString();
+}

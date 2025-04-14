@@ -31,3 +31,13 @@ public class MyEvent
 {
     public string Name { get; set; }
 }
+
+public record MyMessage
+{
+
+}
+
+public record MyCommand
+{
+    public string CorrelationId { get; set; } = Guid.NewGuid().ToString();
+}

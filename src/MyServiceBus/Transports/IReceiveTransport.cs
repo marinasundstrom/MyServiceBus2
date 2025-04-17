@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace MyServiceBus.Transport;
+namespace MyServiceBus.Transports;
 
 public interface IReceiveTransport
 {

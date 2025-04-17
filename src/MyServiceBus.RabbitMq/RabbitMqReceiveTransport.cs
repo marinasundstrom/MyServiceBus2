@@ -1,5 +1,5 @@
 using MyServiceBus.Topology;
-using MyServiceBus.Transport;
+using MyServiceBus.Transports;
 
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;

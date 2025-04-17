@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace MyServiceBus.Transport;
+namespace MyServiceBus.Transports;
 
 public class ReceiveContext<T>
     where T : class

@@ -1,7 +1,7 @@
 
 using System.Text.Json;
 
-namespace MyServiceBus.Transport;
+namespace MyServiceBus.Transports;
 
 public class SendContext<T>
 {

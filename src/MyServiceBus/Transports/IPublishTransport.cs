@@ -1,4 +1,4 @@
-namespace MyServiceBus.Transport;
+namespace MyServiceBus.Transports;
 
 public interface IPublishTransport
 {
